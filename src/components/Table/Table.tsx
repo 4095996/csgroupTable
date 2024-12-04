@@ -143,7 +143,7 @@ const TableComponent: React.FC<Props> = ({
         columnType: 'string' | 'percent'
     ) => {
         if(columnType === 'percent' && data.length > 0) {
-            const isAllValuesIsNumber = data.map(item => item[key]).some(item => Number(item) || item === '' || item == undefined);
+            const isAllValuesIsNumber = data.map(item => item[key]).every(item => Number(item) || item === '' || item == undefined);
 
             if(!isAllValuesIsNumber) {
                 message.error('Невозможно изменить тип колонки, т.к. не все значения в ячейках соответствуют числу');
