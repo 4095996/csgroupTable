@@ -1,5 +1,6 @@
 import { ColumnProps } from 'antd/lib/table';
-import { DataType } from './types';
+import { DataType } from "../interfaces";
+
 export const ADD_COLUMN = 'ADD_COLUMN';
 export const REMOVE_COLUMN = 'REMOVE_COLUMN';
 export const UPDATE_DATA = 'UPDATE_DATA';
