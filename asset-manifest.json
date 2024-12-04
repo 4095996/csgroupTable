@@ -1,14 +1,13 @@
 {
   "files": {
     "main.css": "/csgroupTable/static/css/main.ecc63804.css",
-    "main.js": "/csgroupTable/static/js/main.8ffda989.js",
-    "static/media/logo.svg": "/csgroupTable/static/media/logo.6ef6d23955942c21e1c9b25045f93555.svg",
+    "main.js": "/csgroupTable/static/js/main.4676141e.js",
     "index.html": "/csgroupTable/index.html",
     "main.ecc63804.css.map": "/csgroupTable/static/css/main.ecc63804.css.map",
-    "main.8ffda989.js.map": "/csgroupTable/static/js/main.8ffda989.js.map"
+    "main.4676141e.js.map": "/csgroupTable/static/js/main.4676141e.js.map"
   },
   "entrypoints": [
     "static/css/main.ecc63804.css",
-    "static/js/main.8ffda989.js"
+    "static/js/main.4676141e.js"
   ]
 }
