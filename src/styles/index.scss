@@ -40,9 +40,14 @@ body {
     margin-left: 8px;
   }
   & .cell {
-    width: 100%;
     display: flex;
     justify-content: space-between;
+    & span:first-child {
+      max-width: 50%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
   }
   .tableCont {
     font-family: PT Root UI, sans-serif;

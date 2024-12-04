@@ -7,7 +7,6 @@ import {
     Input,
     message,
     Dropdown,
-    Menu,
     Select,
     MenuProps,
 } from 'antd';
@@ -143,8 +142,10 @@ const TableComponent: React.FC<Props> = ({
         columnType: 'string' | 'percent'
     ) => {
         if(columnType === 'percent' && data.length > 0) {
-            const isAllValuesIsNumber = data.map(item => item[key]).some(item => Number(item));
+            const isAllValuesIsNumber = data.map(item => item[key]).every(item => Number(item) || item === '' || item == undefined);
 
+
+            console.log('isAllValuesIsNumber', data.map(item => item[key]))
             if(!isAllValuesIsNumber) {
                 message.error('Невозможно изменить тип колонки, т.к. не все значения в ячейках соответствуют числу');
                 return;
