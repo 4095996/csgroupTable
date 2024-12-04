@@ -9,6 +9,7 @@ import {
     Dropdown,
     Menu,
     Select,
+    MenuProps,
 } from 'antd';
 import { connect } from 'react-redux';
 import {
@@ -17,39 +18,32 @@ import {
     updateData,
     setColumnType,
 } from '../../store/action';
-import { DataType } from '../../store/types';
-import { ColumnProps } from 'antd/lib/table';
 import {
     DeleteOutlined,
     EditOutlined,
     DownOutlined,
 } from '@ant-design/icons';
+import {
+    DataType,
+    DispatchProps,
+    EditCell,
+    IModifiedColumns,
+    RootState,
+    StateProps,
+    TableComponentProps
+} from "../../interfaces";
 
-interface TableComponentProps {
-    columns: ColumnProps<DataType>[];
-    data: DataType[];
-    columnTypes: { [key: string]: 'string' | 'percent' };
-    addColumn: (column: ColumnProps<DataType>) => void;
-    removeColumn: (key: string) => void;
-    updateData: (data: DataType[]) => void;
-    setColumnType: (key: string, columnType: 'string' | 'percent') => void;
-}
+type Props = StateProps & DispatchProps & TableComponentProps;
 
-interface EditCell {
-    recordKey: string;
-    dataIndex: string;
-    value: any;
-}
-//типизация проверить!!!
-const TableComponent: React.FC<TableComponentProps> = ({
-                                                           columns,
-                                                           data,
-                                                           columnTypes,
-                                                           addColumn,
-                                                           removeColumn,
-                                                           updateData,
-                                                           setColumnType,
-                                                       }) => {
+const TableComponent: React.FC<Props> = ({
+                                             columns,
+                                             data,
+                                             columnTypes,
+                                             addColumn,
+                                             removeColumn,
+                                             updateData,
+                                             setColumnType,
+                                         }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
     const [newColumnTitle, setNewColumnTitle] = useState('');
@@ -68,25 +62,25 @@ const TableComponent: React.FC<TableComponentProps> = ({
         if (newColumnTitle) {
             const dataIndex = newColumnTitle.replace(/\s+/g, '');
 
-            if (data.some((item) => item.hasOwnProperty(dataIndex))) {
+            if (data.some((item) => Object.prototype.hasOwnProperty.call(item, dataIndex))) {
                 message.error('Колонка с таким названием уже существует, придумайте новое');
                 return;
             }
 
-            addColumn({
+            const newColumn: IModifiedColumns = {
                 title: newColumnTitle,
                 dataIndex: dataIndex,
                 key: dataIndex,
                 render: (text, record) => (
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div className="columnHeader">
                         <span>{formatValue(text, dataIndex, newColumnType)}</span>
                         <EditOutlined
-                            style={{ color: 'blue' }}
                             onClick={() => showEditModal(record.key, dataIndex, text)}
                         />
                     </div>
                 ),
-            });
+            };
+            addColumn(newColumn);
             setColumnType(dataIndex, newColumnType);
             setNewColumnTitle('');
             setNewColumnType('string');
@@ -104,9 +98,11 @@ const TableComponent: React.FC<TableComponentProps> = ({
         removeColumn(key);
     };
 
-    const showEditModal = (recordKey: string, dataIndex: string, value: any) => {
-        setEditCell({ recordKey, dataIndex, value });
-        setIsEditModalVisible(true);
+    const showEditModal = (recordKey: string, dataIndex: DataIndex<DataType> | undefined, value: string | number) => {
+        if (typeof dataIndex === 'string') {
+            setEditCell({ recordKey, dataIndex, value });
+            setIsEditModalVisible(true);
+        }
     };
 
     const handleEditOk = () => {
@@ -132,7 +128,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
     const handleCellChange = (
         recordKey: string,
         dataIndex: string,
-        value: any
+        value: string | number
     ) => {
         const updatedData = data.map((item) =>
             item.key === recordKey && Object.keys(item).length > 1
@@ -150,20 +146,20 @@ const TableComponent: React.FC<TableComponentProps> = ({
     };
 
     const formatValue = (
-        value: any,
+        value: string | number,
         dataIndex: string,
-        columnType?: 'string' | 'percent'
-    ) => {
+        columnType: "string" | "percent"
+    ): string | number => {
         const typeToUse = columnType || columnTypes[dataIndex];
         if (typeToUse === 'percent') {
-            const num = parseFloat(value);
+            const num = parseFloat(String(value));
             return isNaN(num) ? value : `${(num * 100).toFixed(2)}%`;
         }
         return value;
     };
 
-    const isValidNumber = (value: any) => {
-        return !isNaN(parseFloat(value)) && isFinite(value);
+    const isValidNumber = (value: string | number): boolean => {
+        return !isNaN(parseFloat(String(value))) && isFinite(Number(value));
     };
 
     const handleAddRow = () => {
@@ -180,54 +176,52 @@ const TableComponent: React.FC<TableComponentProps> = ({
         setIsJsonModalVisible(true);
     };
 
-    const modifiedColumns = columns.map((col) => ({
-        ...col,
-        title: (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <p>{col.title}</p>
-                <div>
-                    <Dropdown
-                        overlay={
-                            <Menu selectedKeys={[columnTypes[col.key as string]]}>
-                                <Menu.Item
-                                    key="string"
-                                    onClick={() =>
-                                        handleColumnTypeChange(col.key as string, 'string')
-                                    }
-                                >
-                                    String
-                                </Menu.Item>
-                                <Menu.Item
-                                    key="percent"
-                                    onClick={() =>
-                                        handleColumnTypeChange(col.key as string, 'percent')
-                                    }
-                                >
-                                    Percent
-                                </Menu.Item>
-                            </Menu>
-                        }
-                        trigger={['click']}
-                    >
-                        <DownOutlined style={{ marginLeft: 8 }} />
-                    </Dropdown>
-                    <DeleteOutlined
-                        style={{ marginLeft: 8, color: 'red' }}
-                        onClick={() => handleRemoveColumn(col.key as string)}
+    const handleMenuClick: MenuProps['onClick'] = (e) => {
+        const [columnKey, itemKey] = e.key.split('-');
+        if (itemKey === 'string' || itemKey === 'percent') {
+            handleColumnTypeChange(columnKey, itemKey as 'string' | 'percent');
+        }
+    };
+
+    const modifiedColumns: IModifiedColumns[] = columns.map((col) => {
+        const menuItems = [
+            { key: `${col.key}-string`, label: 'String' },
+            { key: `${col.key}-percent`, label: 'Percent' },
+        ];
+
+        return {
+            ...col,
+            title: (
+                <div className="cell">
+                    <p>{col.title}</p>
+                    <div>
+                        <Dropdown
+                            menu={{
+                                items: menuItems,
+                                selectedKeys: [`${col.key}-${columnTypes[col.key]}`],
+                                onClick: handleMenuClick,
+                            }}
+                            trigger={['click']}
+                        >
+                            <DownOutlined className="downOutlined" />
+                        </Dropdown>
+                        <DeleteOutlined
+                            className="basket"
+                            onClick={() => handleRemoveColumn(col.key)}
+                        />
+                    </div>
+                </div>
+            ),
+            render: (text: string | number, record: DataType) => (
+                <div className="cell">
+                    <span>{text}</span>
+                    <EditOutlined
+                        onClick={() => showEditModal(record.key, col.dataIndex, text)}
                     />
                 </div>
-            </div>
-        ),
-        render: (text: any, record: DataType) => (
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <span>{formatValue(text, col.dataIndex)}</span>
-                <EditOutlined
-                    style={{ color: 'blue' }}
-                    onClick={() => showEditModal(record.key, col.dataIndex, text)}
-                />
-            </div>
-        ),
-    }));
+            ),
+        };
+    });
 
     useEffect(() => {
         if (columns.length === 0) {
@@ -237,22 +231,19 @@ const TableComponent: React.FC<TableComponentProps> = ({
 
     return (
         <div>
-            <Button type="primary" onClick={showModal} style={{ marginBottom: 16 }}>
+            <Button type="primary" onClick={showModal}>
                 Добавить колонку
             </Button>
-
             {columns.length > 0 && (
-                <Button onClick={handleAddRow} style={{ marginBottom: 16 }}>
+                <Button onClick={handleAddRow}>
                     Добавить строку
                 </Button>
             )}
-
             {data.length > 0 && (
-                <Button onClick={handleGenerateJson} style={{ marginBottom: 16 }}>
+                <Button onClick={handleGenerateJson}>
                     Сгенерировать JSON
                 </Button>
             )}
-
             <Modal
                 title="Сгенерировать JSON"
                 open={isJsonModalVisible}
@@ -261,7 +252,6 @@ const TableComponent: React.FC<TableComponentProps> = ({
             >
                 <pre>{jsonData}</pre>
             </Modal>
-
             <Modal
                 title="Добавить новую колонку"
                 open={isModalVisible}
@@ -306,7 +296,7 @@ const TableComponent: React.FC<TableComponentProps> = ({
                                         : {
                                             recordKey: '',
                                             dataIndex: '',
-                                            value: e.target.value,
+                                            value: '',
                                         }
                                 )
                             }
@@ -314,23 +304,21 @@ const TableComponent: React.FC<TableComponentProps> = ({
                     </Form.Item>
                 </Form>
             </Modal>
-
             <Table
                 columns={modifiedColumns}
                 dataSource={data}
-                pagination={{ pageSize: 10 }}
             />
         </div>
     );
 };
 
-const mapStateToProps = (state: any) => ({
+const mapStateToProps = (state: RootState): StateProps => ({
     columns: state.columns,
     data: state.data,
     columnTypes: state.columnTypes,
 });
 
-const mapDispatchToProps = { //проверить
+const mapDispatchToProps: DispatchProps = {
     addColumn,
     removeColumn,
     updateData,
