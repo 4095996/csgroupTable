@@ -225,7 +225,7 @@ const TableComponent: React.FC<Props> = ({
     }, [columns, updateData]);
 
     return (
-        <div>
+        <div className="tableCont">
             <Button type="primary" onClick={showModal}>
                 Добавить колонку
             </Button>
