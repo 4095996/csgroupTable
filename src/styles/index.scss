@@ -31,13 +31,13 @@ body {
   & .columnHeader {
     display: flex;
     justify-content: space-between;
-    & .basket {
-      margin-left: 8px;
-      color: red;
-    }
-    & .downOutlined {
-      margin-left: 8px;
-    }
+  }
+  & .basket {
+    margin-left: 8px;
+    color: red;
+  }
+  & .downOutlined {
+    margin-left: 8px;
   }
   & .cell {
     width: 100%;

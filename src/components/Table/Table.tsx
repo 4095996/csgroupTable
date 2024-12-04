@@ -73,7 +73,7 @@ const TableComponent: React.FC<Props> = ({
                 key: dataIndex,
                 render: (text, record) => (
                     <div className="columnHeader">
-                        <span>{formatValue(text, dataIndex, newColumnType)}</span>
+                        <span>{text}</span>
                         <EditOutlined
                             onClick={() => showEditModal(record.key, dataIndex, text)}
                         />
@@ -142,20 +142,15 @@ const TableComponent: React.FC<Props> = ({
         key: string,
         columnType: 'string' | 'percent'
     ) => {
-        setColumnType(key, columnType);
-    };
+        if(columnType === 'percent' && data.length > 0) {
+            const isAllValuesIsNumber = data.map(item => item[key]).some(item => Number(item));
 
-    const formatValue = (
-        value: string | number,
-        dataIndex: string,
-        columnType: "string" | "percent"
-    ): string | number => {
-        const typeToUse = columnType || columnTypes[dataIndex];
-        if (typeToUse === 'percent') {
-            const num = parseFloat(String(value));
-            return isNaN(num) ? value : `${(num * 100).toFixed(2)}%`;
+            if(!isAllValuesIsNumber) {
+                message.error('Невозможно изменить тип колонки, т.к. не все значения в ячейках соответствуют числу');
+                return;
+            }
         }
-        return value;
+        setColumnType(key, columnType);
     };
 
     const isValidNumber = (value: string | number): boolean => {
@@ -259,13 +254,13 @@ const TableComponent: React.FC<Props> = ({
                 onCancel={handleCancel}
             >
                 <Form layout="vertical">
-                    <Form.Item label="Title">
+                    <Form.Item label="Название">
                         <Input
                             value={newColumnTitle}
                             onChange={(e) => setNewColumnTitle(e.target.value)}
                         />
                     </Form.Item>
-                    <Form.Item label="Type">
+                    <Form.Item label="Тип (строка или процент">
                         <Select
                             value={newColumnType}
                             onChange={(value: 'string' | 'percent') =>
