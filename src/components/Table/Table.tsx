@@ -16,8 +16,8 @@ import {
     removeColumn,
     updateData,
     setColumnType,
-} from '../store/action';
-import { DataType } from '../store/types';
+} from '../../store/action';
+import { DataType } from '../../store/types';
 import { ColumnProps } from 'antd/lib/table';
 import {
     DeleteOutlined,
