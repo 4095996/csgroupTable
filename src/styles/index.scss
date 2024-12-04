@@ -1,5 +1,31 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  font-family: sans-serif;
+  font-family: Roboto, sans-serif;
   padding: 48px 64px;
   background: #F2F2F7;
+  & .headerContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    & p {
+      font-weight: 400;
+    }
+    & .title {
+      font-size: 57px;
+      line-height: 64px;
+      letter-spacing: -0.25px;
+    }
+    & .developer {
+      font-size: 28px;
+      line-height: 36px;
+    }
+  }
+  & button {
+    margin-right: 20px;
+  }
 }
