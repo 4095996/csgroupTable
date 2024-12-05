@@ -290,6 +290,7 @@ const TableComponent: React.FC<Props> = ({
                 open={modalType !== null}
                 onOk={handleOk}
                 onCancel={handleCancel}
+                className="modal"
             >
                 {renderModalContent(modalType)}
             </Modal>
