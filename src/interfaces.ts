@@ -40,3 +40,15 @@ export interface RootState {
     data: DataType[];
     columnTypes: Record<string, 'string' | 'percent'>;
 }
+export interface StateProps {
+    columns: IModifiedColumns[];
+    data: DataType[];
+    columnTypes: Record<string, 'string' | 'percent'>;
+}
+export interface OwnProps {}
+export interface DispatchProps {
+    addColumn: (column: IModifiedColumns) => void;
+    removeColumn: (key: string) => void;
+    updateData: (data: DataType[]) => void;
+    setColumnType: (key: string, columnType: 'string' | 'percent') => void;
+}
