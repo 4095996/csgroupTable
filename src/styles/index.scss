@@ -43,6 +43,12 @@ body {
     width: 100%;
     display: flex;
     justify-content: space-between;
+    & span.cellValue {
+      width: 70%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
   .tableCont {
     font-family: PT Root UI, sans-serif;

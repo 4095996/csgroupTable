@@ -12,16 +12,16 @@ import {
     MenuProps,
 } from 'antd';
 import {
+    DeleteOutlined,
+    EditOutlined,
+    DownOutlined,
+} from '@ant-design/icons';
+import {
     addColumn,
     removeColumn,
     updateData,
     setColumnType,
 } from '../../store/action';
-import {
-    DeleteOutlined,
-    EditOutlined,
-    DownOutlined,
-} from '@ant-design/icons';
 import {
     DataType, DispatchProps,
     EditCell,
@@ -32,19 +32,22 @@ import {
     isValidNumber,
     generateJsonData,
     handleColumnTypeChange as handleColumnTypeChangeHelper,
-    createNewRow,
+    createNewRow, getModalTitle,
 } from './helpers';
+
 const mapStateToProps = (state: RootState): StateProps => ({
     columns: state.columns,
     data: state.data,
     columnTypes: state.columnTypes,
 });
+
 const mapDispatchToProps: DispatchProps = {
     addColumn,
     removeColumn,
     updateData,
     setColumnType,
 };
+
 const connector = connect<StateProps, DispatchProps, OwnProps, RootState>(
     mapStateToProps,
     mapDispatchToProps
@@ -52,6 +55,8 @@ const connector = connect<StateProps, DispatchProps, OwnProps, RootState>(
 
 type PropsFromRedux = ConnectedProps<typeof connector>;
 type Props = PropsFromRedux & OwnProps;
+
+type ModalType = 'addColumn' | 'editCell' | 'generateJson' | null;
 
 const TableComponent: React.FC<Props> = ({
                                              columns,
@@ -62,48 +67,63 @@ const TableComponent: React.FC<Props> = ({
                                              updateData,
                                              setColumnType,
                                          }) => {
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [modalType, setModalType] = useState<ModalType>(null);
     const [newColumnTitle, setNewColumnTitle] = useState('');
     const [newColumnType, setNewColumnType] = useState<'string' | 'percent'>('string');
     const [editCell, setEditCell] = useState<EditCell | null>(null);
-    const [isJsonModalVisible, setIsJsonModalVisible] = useState(false);
     const [jsonData, setJsonData] = useState('');
 
     const handleOk = () => {
-        if (newColumnTitle) {
-            const dataIndex = newColumnTitle.replace(/\s+/g, '');
+        if (modalType === 'addColumn') {
+            if (newColumnTitle) {
+                const dataIndex = newColumnTitle.replace(/\s+/g, '');
 
-            if (data.some((item) => Object.prototype.hasOwnProperty.call(item, dataIndex))) {
-                message.error('Колонка с таким названием уже существует, придумайте новое');
-                return;
+                if (data.some((item) => Object.prototype.hasOwnProperty.call(item, dataIndex))) {
+                    message.error('Колонка с таким названием уже существует, придумайте новое');
+                    return;
+                }
+
+                const newColumn: IModifiedColumns = {
+                    title: newColumnTitle,
+                    dataIndex: dataIndex,
+                    key: dataIndex,
+                    render: (text, record) => (
+                        <div className="columnHeader">
+                            <span>{text}</span>
+                            <EditOutlined
+                                onClick={() => showEditModal(record.key, dataIndex, text)}
+                            />
+                        </div>
+                    ),
+                };
+                addColumn(newColumn);
+                setColumnType(dataIndex, newColumnType);
+                setNewColumnTitle('');
+                setNewColumnType('string');
             }
-
-            const newColumn: IModifiedColumns = {
-                title: newColumnTitle,
-                dataIndex: dataIndex,
-                key: dataIndex,
-                render: (text, record) => (
-                    <div className="columnHeader">
-                        <span>{text}</span>
-                        <EditOutlined
-                            onClick={() => showEditModal(record.key, dataIndex, text)}
-                        />
-                    </div>
-                ),
-            };
-            addColumn(newColumn);
-            setColumnType(dataIndex, newColumnType);
-            setNewColumnTitle('');
-            setNewColumnType('string');
-            setIsModalVisible(false);
+        } else if (modalType === 'editCell') {
+            if (editCell) {
+                const columnType = columnTypes[editCell.dataIndex];
+                if (columnType === 'percent') {
+                    if (!isValidNumber(editCell.value)) {
+                        message.error('Колонка имеет тип "percent", введите числовое значение!');
+                        return;
+                    }
+                }
+                handleCellChange(editCell.recordKey, editCell.dataIndex, editCell.value);
+            }
         }
+        setModalType(null);
     };
 
     const handleCancel = () => {
-        setIsModalVisible(false);
-        setNewColumnTitle('');
-        setNewColumnType('string');
+        setModalType(null);
+        if (modalType === 'addColumn') {
+            setNewColumnTitle('');
+            setNewColumnType('string');
+        } else if (modalType === 'editCell') {
+            setEditCell(null);
+        }
     };
 
     const handleRemoveColumn = (key: string) => {
@@ -117,28 +137,8 @@ const TableComponent: React.FC<Props> = ({
     ) => {
         if (typeof dataIndex === 'string') {
             setEditCell({ recordKey, dataIndex, value });
-            setIsEditModalVisible(true);
+            setModalType('editCell');
         }
-    };
-
-    const handleEditOk = () => {
-        if (editCell) {
-            const columnType = columnTypes[editCell.dataIndex];
-            if (columnType === 'percent') {
-                if (!isValidNumber(editCell.value)) {
-                    message.error('Колонка имеет тип "percent", введите числовое значение!');
-                    return;
-                }
-            }
-            handleCellChange(editCell.recordKey, editCell.dataIndex, editCell.value);
-        }
-        setIsEditModalVisible(false);
-        setEditCell(null);
-    };
-
-    const handleEditCancel = () => {
-        setIsEditModalVisible(false);
-        setEditCell(null);
     };
 
     const handleCellChange = (
@@ -169,7 +169,7 @@ const TableComponent: React.FC<Props> = ({
     const handleGenerateJson = () => {
         const json = generateJsonData(data);
         setJsonData(json);
-        setIsJsonModalVisible(true);
+        setModalType('generateJson');
     };
 
     const handleMenuClick: MenuProps['onClick'] = (e) => {
@@ -210,7 +210,7 @@ const TableComponent: React.FC<Props> = ({
             ),
             render: (text: string | number, record: DataType) => (
                 <div className="cell">
-                    <span>{text}</span>
+                    <span className="cellValue">{text}</span>
                     <EditOutlined
                         onClick={() => showEditModal(record.key, col.dataIndex, text)}
                     />
@@ -225,76 +225,77 @@ const TableComponent: React.FC<Props> = ({
         }
     }, [columns, updateData]);
 
+    const renderModalContent = (modalType: ModalType) => {
+        switch (modalType) {
+            case 'addColumn':
+                return (
+                    <Form layout="vertical">
+                        <Form.Item label="Название">
+                            <Input
+                                value={newColumnTitle}
+                                onChange={(e) => setNewColumnTitle(e.target.value)}
+                            />
+                        </Form.Item>
+                        <Form.Item label="Тип (строка или процент">
+                            <Select
+                                value={newColumnType}
+                                onChange={(value: 'string' | 'percent') =>
+                                    setNewColumnType(value)
+                                }
+                            >
+                                <Select.Option value="string">String</Select.Option>
+                                <Select.Option value="percent">Percent</Select.Option>
+                            </Select>
+                        </Form.Item>
+                    </Form>
+                );
+            case 'editCell':
+                return (
+                    <Form layout="vertical">
+                        <Form.Item>
+                            <Input
+                                value={editCell?.value}
+                                onChange={(e) =>
+                                    setEditCell(
+                                        editCell
+                                            ? { ...editCell, value: e.target.value }
+                                            : {
+                                                recordKey: '',
+                                                dataIndex: '',
+                                                value: '',
+                                            }
+                                    )
+                                }
+                            />
+                        </Form.Item>
+                    </Form>
+                );
+            case 'generateJson':
+                return <pre>{jsonData}</pre>;
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="tableCont">
-            <Button type="primary" onClick={() => setIsModalVisible(true)}>
+            <Button type="primary" onClick={() => setModalType('addColumn')}>
                 Добавить колонку
             </Button>
             {columns.length > 0 && <Button onClick={handleAddRow}>Добавить строку</Button>}
             {data.length > 0 && <Button onClick={handleGenerateJson}>Сгенерировать JSON</Button>}
+
             <Modal
-                 title="Сгенерировать JSON"
-                 open={isJsonModalVisible}
-                 onOk={() => setIsJsonModalVisible(false)}
-                 onCancel={() => setIsJsonModalVisible(false)}
-            >
-                <pre>{jsonData}</pre>
-            </Modal>
-            <Modal
-                title="Добавить новую колонку"
-                open={isModalVisible}
+                title={getModalTitle(modalType)}
+                open={modalType !== null}
                 onOk={handleOk}
                 onCancel={handleCancel}
             >
-                <Form layout="vertical">
-                    <Form.Item label="Название">
-                        <Input
-                            value={newColumnTitle}
-                            onChange={(e) => setNewColumnTitle(e.target.value)}
-                        />
-                    </Form.Item>
-                    <Form.Item label="Тип (строка или процент">
-                        <Select
-                            value={newColumnType}
-                            onChange={(value: 'string' | 'percent') =>
-                                setNewColumnType(value)
-                            }
-                        >
-                            <Select.Option value="string">String</Select.Option>
-                            <Select.Option value="percent">Percent</Select.Option>
-                        </Select>
-                    </Form.Item>
-                </Form>
+                {renderModalContent(modalType)}
             </Modal>
-
-            <Modal
-                title="Редактировать ячейку"
-                open={isEditModalVisible}
-                onOk={handleEditOk}
-                onCancel={handleEditCancel}
-            >
-                <Form layout="vertical">
-                    <Form.Item>
-                        <Input
-                            value={editCell?.value}
-                            onChange={(e) =>
-                                setEditCell(
-                                    editCell
-                                        ? { ...editCell, value: e.target.value }
-                                        : {
-                                            recordKey: '',
-                                            dataIndex: '',
-                                            value: '',
-                                        }
-                                )
-                            }
-                        />
-                    </Form.Item>
-                </Form>
-            </Modal>
-
             <Table columns={modifiedColumns} dataSource={data} />
         </div>
     );
 };
+
 export default connector(TableComponent);

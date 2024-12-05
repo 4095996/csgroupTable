@@ -1,5 +1,6 @@
 import {DataType, IModifiedColumns} from "../../interfaces";
-import {message} from "antd";
+import {Form, Input, message, Select} from "antd";
+import React from "react";
 
 export const isValidNumber = (value: string | number): boolean => {
     return !isNaN(parseFloat(String(value))) && isFinite(Number(value));
@@ -32,4 +33,17 @@ export const createNewRow = (columns: IModifiedColumns[]): DataType => {
         newRow[column.dataIndex] = '';
     });
     return newRow;
+};
+
+export const getModalTitle = (modalType: string | null) => {
+    switch (modalType) {
+        case 'addColumn':
+            return 'Добавить новую колонку';
+        case 'editCell':
+            return 'Редактировать ячейку';
+        case 'generateJson':
+            return 'Сгенерировать JSON';
+        default:
+            return '';
+    }
 };
