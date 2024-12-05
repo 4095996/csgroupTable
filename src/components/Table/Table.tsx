@@ -179,52 +179,6 @@ const TableComponent: React.FC<Props> = ({
         }
     };
 
-    const modifiedColumns: IModifiedColumns[] = columns.map((col) => {
-        const menuItems = [
-            { key: `${col.key}-string`, label: 'String' },
-            { key: `${col.key}-percent`, label: 'Percent' },
-        ];
-
-        return {
-            ...col,
-            title: (
-                <div className="cell">
-                    <p>{col.title}</p>
-                    <div>
-                        <Dropdown
-                            menu={{
-                                items: menuItems,
-                                selectedKeys: [`${col.key}-${columnTypes[col.key]}`],
-                                onClick: handleMenuClick,
-                            }}
-                            trigger={['click']}
-                        >
-                            <DownOutlined className="downOutlined" />
-                        </Dropdown>
-                        <DeleteOutlined
-                            className="basket"
-                            onClick={() => handleRemoveColumn(col.key)}
-                        />
-                    </div>
-                </div>
-            ),
-            render: (text: string | number, record: DataType) => (
-                <div className="cell">
-                    <span className="cellValue">{text}</span>
-                    <EditOutlined
-                        onClick={() => showEditModal(record.key, col.dataIndex, text)}
-                    />
-                </div>
-            ),
-        };
-    });
-
-    useEffect(() => {
-        if (columns.length === 0) {
-            updateData([]);
-        }
-    }, [columns, updateData]);
-
     const renderModalContent = (modalType: ModalType) => {
         switch (modalType) {
             case 'addColumn':
@@ -276,6 +230,74 @@ const TableComponent: React.FC<Props> = ({
                 return null;
         }
     };
+
+    const handleRemoveRow = (key: string) => {
+        const newData = data.filter((item) => item.key !== key);
+        updateData(newData);
+    };
+
+    const modifiedColumns: IModifiedColumns[] = columns.map((col) => {
+        const menuItems = [
+            { key: `${col.key}-string`, label: 'String' },
+            { key: `${col.key}-percent`, label: 'Percent' },
+        ];
+
+        return {
+            ...col,
+            title: (
+                <div className="cell">
+                    <p>{col.title}</p>
+                    <div>
+                        <Dropdown
+                            menu={{
+                                items: menuItems,
+                                selectedKeys: [`${col.key}-${columnTypes[col.key]}`],
+                                onClick: handleMenuClick,
+                            }}
+                            trigger={['click']}
+                        >
+                            <DownOutlined className="downOutlined" />
+                        </Dropdown>
+                        <DeleteOutlined
+                            className="basket"
+                            onClick={() => handleRemoveColumn(col.key)}
+                        />
+                    </div>
+                </div>
+            ),
+            render: (text: string | number, record: DataType) => (
+                <div className="cell">
+                    <span className="cellValue">{text}</span>
+                    <EditOutlined
+                        onClick={() => showEditModal(record.key, col.dataIndex, text)}
+                    />
+                </div>
+            ),
+        };
+    });
+
+    modifiedColumns.push({
+        title: '',
+        dataIndex: 'delete',
+        key: 'delete',
+        width: 50,
+        render: (text: string | number, record: DataType) => (
+            <DeleteOutlined
+                className="basket"
+                onClick={() => handleRemoveRow(record.key)}
+            />
+        ),
+    });
+
+
+
+    useEffect(() => {
+        if (columns.length === 0) {
+            updateData([]);
+        }
+    }, [columns, updateData]);
+
+
 
     return (
         <div className="tableCont">

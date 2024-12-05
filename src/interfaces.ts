@@ -23,6 +23,7 @@ export interface IModifiedColumns {
     key: string;
     title: React.ReactNode;
     render: (text: string | number, record: DataType) => React.ReactNode;
+    width?: number | undefined;
 }
 export interface StateProps {
     columns: IModifiedColumns[];
