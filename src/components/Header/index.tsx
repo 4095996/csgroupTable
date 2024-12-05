@@ -1,5 +1,5 @@
 import React from "react";
-import Logo from '../../assets/logo.svg'
+import logo from '../../assets/logo.svg'
 import { appData } from "../../constants";
 
 export const Header = () => {
@@ -9,7 +9,7 @@ export const Header = () => {
                 <p className="title">{appData.title}</p>
                 <p  className="developer">Frontend-разработчик: {appData.developer}</p>
             </div>
-            <Logo />
+            <img src={logo} alt="logo"/>
         </div>
 
     )

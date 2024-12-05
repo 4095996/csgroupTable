@@ -5,7 +5,7 @@ import {
     UPDATE_DATA,
     SET_COLUMN_TYPE,
 } from './action';
-import { DataType } from './types';
+import { DataType } from '../interfaces';
 
 interface State {
     columns: ColumnProps<DataType>[];
